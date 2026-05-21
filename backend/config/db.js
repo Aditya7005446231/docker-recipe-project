@@ -6,7 +6,8 @@ const connectDB = async () => {
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`Database Connection Error: ${error.message}`);
-    process.exit(1); // Exit process with failure
+    console.log("Running without database connection... Spoonacular API will still work!");
+    // process.exit(1) removed so the server doesn't crash on Render without a DB
   }
 };
 
