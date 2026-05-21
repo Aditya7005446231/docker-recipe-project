@@ -62,3 +62,17 @@ export const api = {
     return handleResponse(response);
   }
 };
+
+
+export const searchExternalRecipes = async (query) => {
+  try{
+    const response = await fetch(`http://localhost:5000/api/recipes/search/external?query=${query}`);
+
+    if (!response.ok) throw new Error('Failed to fetch from server');
+
+    const data = await response.json();
+    return data;
+  }catch(error){
+    console.error('Error searching recipes:',error);
+  }
+};

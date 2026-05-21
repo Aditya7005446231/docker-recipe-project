@@ -29,6 +29,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @desc    Search Spoonacular recipes
+// @route   GET /api/recipes/search/external
+// @access  Public
+router.get('/search/external', async (req, res) => {
+  try {
+    const searchQuery = req.query.query;
+    const apiKey = process.env.SPOONACULAR_API_KEY;
+    const spoonacularUrl = `https://api.spoonacular.com/recipes/complexSearch?query=${searchQuery}&addRecipeInformation=true&fillIngredients=true&apiKey=${apiKey}`;
+
+    const response = await fetch(spoonacularUrl);
+    const data = await response.json();
+
+    res.json(data.results);
+  } catch (error) {
+    console.error('Error fetching from Spoonacular:', error);
+    res.status(500).json({ message: 'Error fetching external recipes' });
+  }
+});
+
 // @desc    Get single recipe
 // @route   GET /api/recipes/:id
 // @access  Public

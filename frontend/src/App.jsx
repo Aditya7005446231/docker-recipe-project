@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from './utils/api';
+import { api, searchExternalRecipes } from './utils/api';
 import Navbar from './components/Navbar';
 import RecipeCard from './components/RecipeCard';
 import RecipeModal from './components/RecipeModal';
@@ -14,6 +14,7 @@ const App = () => {
   
   // Filtering and Searching states
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchSource, setSearchSource] = useState('local'); // 'local' or 'external'
   const [selectedCuisine, setSelectedCuisine] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   
@@ -34,7 +35,29 @@ const App = () => {
         cuisine: selectedCuisine,
         difficulty: selectedDifficulty
       };
-      const data = await api.getRecipes(filters);
+      
+      // Check if we want to search Spoonacular or Local DB
+      let data = [];
+      if (searchSource === 'external' && searchQuery) {
+        // Trigger Spoonacular search if external is selected and there's a query
+        const spoonacularData = await searchExternalRecipes(searchQuery);
+        
+        // Map Spoonacular data to match our RecipeCard
+        data = spoonacularData.map(item => ({
+          _id: `external-${item.id}`,
+          title: item.title,
+          imageUrl: item.image,
+          cookingTime: item.readyInMinutes || 30,
+          difficulty: "Medium",
+          cuisine: "External API",
+          ingredients: item.extendedIngredients ? item.extendedIngredients.map(ing => ing.original) : [],
+          instructions: item.instructions ? item.instructions.replace(/<[^>]*>?/gm, '') : "Instructions available on Spoonacular"
+        }));
+      } else {
+        // Normal local search
+        data = await api.getRecipes(filters);
+      }
+      
       setRecipes(data);
       setError('');
     } catch (err) {
@@ -52,7 +75,7 @@ const App = () => {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, selectedCuisine, selectedDifficulty]);
+  }, [searchQuery, selectedCuisine, selectedDifficulty, searchSource]);
 
   // Trigger transient toast alert
   const showToast = (message, type = 'success') => {
@@ -191,6 +214,19 @@ const App = () => {
 
       {/* Filter Controls Bar */}
       <div className="filter-bar glass-panel">
+        <div className="filter-group">
+          <span className="filter-label">Search Source:</span>
+          <select 
+            className="filter-select"
+            style={{ fontWeight: 'bold', color: searchSource === 'external' ? '#fb923c' : 'inherit' }}
+            value={searchSource}
+            onChange={(e) => setSearchSource(e.target.value)}
+          >
+            <option value="local">My Recipes</option>
+            <option value="external">Discover (Web)</option>
+          </select>
+        </div>
+
         <div className="filter-group">
           <span className="filter-label">Filter Cuisine:</span>
           <select 

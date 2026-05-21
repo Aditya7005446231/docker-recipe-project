@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # 1. The Database Service
+  mongodb:
+    image: mongo:latest
+    container_name: recipe-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # 2. The Backend Service
+  backend:
+    build: ./backend
+    container_name: recipe-backend
+    ports:
+      - "5000:5000"
+    environment:
+      # Notice how it connects to "mongodb" (the service name above) instead of "localhost"
+      - MONGO_URI=mongodb://mongodb:27017/recipebook
+      # Add your Spoonacular API key here so the container can use it
+      - SPOONACULAR_API_KEY=744b34abb3d8430b940a9de4c04b4a92
+    depends_on:
+      - mongodb
+
+  # 3. The Frontend Service
+  frontend:
+    build: ./frontend
+    container_name: recipe-frontend
+    ports:
+      - "3000:80" # Maps port 3000 on your PC to Nginx's port 80 inside the container
+    depends_on:
+      - backend
+
+# Creates a permanent hard drive for MongoDB so your recipes don't delete when Docker stops
+volumes:
+  mongo-data:
